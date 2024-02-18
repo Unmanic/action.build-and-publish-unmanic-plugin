@@ -51,8 +51,10 @@ runs:
       if: steps.previous_jobs_success.outputs.IS_SUCCESS == 'true'
       uses: Josh5/action-generate-unmanic-plugin-repo@master
       with:
+        python_version: ${{ inputs.python_version }}
+        node_version: ${{ inputs.node_version }}
         deploy_repo: 'false'
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ inputs.github_token }}
 
     # Upload artifacts
     - name: Upload Artifacts
@@ -68,7 +70,7 @@ runs:
       with: 
         tag: ${{ steps.prepare.outputs.plugin_version }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
 
     - name: Print Tag Exists result
       uses: bash
@@ -80,7 +82,7 @@ runs:
       with:
         name: "Tagged Build: ${{ steps.prepare.outputs.plugin_version }}"
         body: "Versioned release"
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.github_token }}
         artifacts: repo/**/*.zip
         generateReleaseNotes: true
         allowUpdates: false
@@ -94,7 +96,7 @@ runs:
       with:
         name: "Development Build"
         body: "Latest development release"
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.github_token }}
         artifacts: repo/**/*.zip
         generateReleaseNotes: true
         allowUpdates: true
