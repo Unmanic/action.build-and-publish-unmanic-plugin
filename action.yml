@@ -25,6 +25,7 @@ runs:
     # Prepare build environment
     - name: Prepare build environment
       shell: bash
+      id: prepare
       run: |
         # Create dummy repo config
         cat << EOF > config.json
@@ -69,10 +70,6 @@ runs:
         tag: ${{ steps.prepare.outputs.plugin_version }}
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
-
-    - name: Print Tag Exists result
-      shell: bash
-      run: echo "Exists == '${{ steps.check_tag_exists.outputs.exists }}' -"
 
     - name: Generate Tagged Release
       uses: ncipollo/release-action@v1
