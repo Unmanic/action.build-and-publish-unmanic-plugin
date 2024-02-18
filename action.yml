@@ -2,16 +2,17 @@ name: 'Build and Publish Plugin'
 description: 'Automatically build and publish plugins to their GitHub repositories'
 inputs:
   python_version:
-    description: 'Python version for setup'
+    description: 'Python version for building.'
     required: false
     default: '3.11'
   node_version:
-    description: 'Node version for setup'
+    description: 'Node version for building'
     required: false
     default: '20'
   github_token:
     description: 'A GitHub token with the permissions to push back to this repository'
     required: true
+    default: ${{ github.token }}
 runs:
   using: 'composite'
   steps:
