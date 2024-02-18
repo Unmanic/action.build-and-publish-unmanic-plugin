@@ -1,0 +1,105 @@
+name: 'Build and Publish Plugin'
+description: 'Automatically build and publish plugins to their GitHub repositories'
+inputs:
+  python_version:
+    description: 'Python version for setup'
+    required: false
+    default: '3.11'
+  node_version:
+    description: 'Node version for setup'
+    required: false
+    default: '20'
+  github_token:
+    description: 'A GitHub token with the permissions to push back to this repository'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+
+    # Checkout plugin source
+    - name: Checkout plugin
+      uses: actions/checkout@v3
+      with:
+        path: plugin
+        submodules: recursive
+
+    # Prepare build environment
+    - name: Prepare build environment
+      uses: bash
+      run: |
+        # Create dummy repo config
+        cat << EOF > config.json
+        {
+            "id": "repository.tmp",
+            "name": "Build Repo",
+            "icon": ""
+        }
+        EOF
+
+        # Read plugin id and version from info.json
+        plugin_id=$(cat plugin/info.json | jq -r .id)
+        plugin_version=$(cat plugin/info.json | jq -r .version)
+        echo "plugin_id=${plugin_id}" >> $GITHUB_OUTPUT
+        echo "plugin_version=${plugin_version}" >> $GITHUB_OUTPUT
+
+        # Install plugin into source directory for building
+        mkdir -p source/
+        mv -fv plugin source/${plugin_id}
+
+    # Execute plugin repo gen action
+    - name: Generate and Deploy Unmanic Plugin Repository
+      if: steps.previous_jobs_success.outputs.IS_SUCCESS == 'true'
+      uses: Josh5/action-generate-unmanic-plugin-repo@master
+      with:
+        deploy_repo: 'false'
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    # Upload artifacts
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: plugin.${{ steps.prepare.outputs.plugin_id }}-v${{ steps.prepare.outputs.plugin_version }}
+        path: repo/**/*.zip
+
+    # Generate tagged release (should not be updated)
+    - name: Check Tag Already Exists
+      uses: mukunku/tag-exists-action@v1.2.0
+      id: check_tag_exists
+      with: 
+        tag: ${{ steps.prepare.outputs.plugin_version }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Print Tag Exists result
+      uses: bash
+      run: echo "Exists == '${{ steps.check_tag_exists.outputs.exists }}' -"
+
+    - name: Generate Tagged Release
+      uses: ncipollo/release-action@v1
+      if: steps.check_tag_exists.outputs.exists == 'false'
+      with:
+        name: "Tagged Build: ${{ steps.prepare.outputs.plugin_version }}"
+        body: "Versioned release"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        artifacts: repo/**/*.zip
+        generateReleaseNotes: true
+        allowUpdates: false
+        skipIfReleaseExists: true
+        tag: ${{ steps.prepare.outputs.plugin_version }}
+        commit: master
+
+    # Generate latest development
+    - name: Update Latest Release
+      uses: ncipollo/release-action@v1
+      with:
+        name: "Development Build"
+        body: "Latest development release"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        artifacts: repo/**/*.zip
+        generateReleaseNotes: true
+        allowUpdates: true
+        removeArtifacts: true
+        replacesArtifacts: true
+        tag: latest
+        commit: master
+        prerelease: true
