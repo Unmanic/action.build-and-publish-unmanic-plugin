@@ -49,7 +49,7 @@ runs:
 
     # Execute plugin repo gen action
     - name: Generate and Deploy Unmanic Plugin Repository
-      uses: Josh5/action-generate-unmanic-plugin-repo@master
+      uses: Unmanic/action.generate-unmanic-plugin-repo@master
       with:
         python_version: ${{ inputs.python_version }}
         node_version: ${{ inputs.node_version }}
