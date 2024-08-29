@@ -18,7 +18,7 @@ runs:
   steps:
     # Checkout plugin source
     - name: Checkout plugin
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: plugin
         submodules: recursive
@@ -58,14 +58,15 @@ runs:
 
     # Upload artifacts
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: plugin.${{ steps.prepare.outputs.plugin_id }}-v${{ steps.prepare.outputs.plugin_version }}
         path: repo/**/*.zip
+        overwrite: 'true'
 
     # Generate tagged release (should not be updated)
     - name: Check Tag Already Exists
-      uses: mukunku/tag-exists-action@v1.2.0
+      uses: mukunku/tag-exists-action@v1.6.0
       id: check_tag_exists
       with: 
         tag: ${{ steps.prepare.outputs.plugin_version }}
